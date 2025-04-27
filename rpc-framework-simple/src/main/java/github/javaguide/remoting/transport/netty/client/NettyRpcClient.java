@@ -51,8 +51,8 @@ public final class NettyRpcClient implements RpcRequestTransport {
     public NettyRpcClient() {
         // initialize resources such as EventLoopGroup, Bootstrap
         eventLoopGroup = new NioEventLoopGroup();
-        bootstrap = new Bootstrap();
-        bootstrap.group(eventLoopGroup)
+        this.bootstrap = new Bootstrap();
+        this.bootstrap.group(eventLoopGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 //  The timeout period of the connection.
@@ -60,13 +60,16 @@ public final class NettyRpcClient implements RpcRequestTransport {
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
-                    protected void initChannel(SocketChannel ch) {
-                        ChannelPipeline p = ch.pipeline();
+                    protected void initChannel(SocketChannel socketChannel) {
+                        socketChannel.pipeline()
                         // If no data is sent to the server within 15 seconds, a heartbeat request is sent
-                        p.addLast(new IdleStateHandler(0, 5, 0, TimeUnit.SECONDS));
-                        p.addLast(new RpcMessageEncoder());
-                        p.addLast(new RpcMessageDecoder());
-                        p.addLast(new NettyRpcClientHandler());
+                        // read: receive data
+                        // write: send data
+                        // all: both
+                        .addLast(new IdleStateHandler(0, 5, 0, TimeUnit.SECONDS))
+                        .addLast(new RpcMessageEncoder())
+                        .addLast(new RpcMessageDecoder())
+                        .addLast(new NettyRpcClientHandler());
                     }
                 });
         this.serviceDiscovery = ExtensionLoader.getExtensionLoader(ServiceDiscovery.class).getExtension(ServiceDiscoveryEnum.ZK.getName());
@@ -77,7 +80,7 @@ public final class NettyRpcClient implements RpcRequestTransport {
     /**
      * connect server and get the channel ,so that you can send rpc message to server
      *
-     * @param inetSocketAddress server address
+     * @param inetSocketAddress server address (IP:PORT)
      * @return the channel
      */
     @SneakyThrows

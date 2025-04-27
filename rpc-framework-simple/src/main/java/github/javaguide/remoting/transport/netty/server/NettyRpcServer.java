@@ -52,8 +52,8 @@ public class NettyRpcServer {
     public void start() {
         CustomShutdownHook.getCustomShutdownHook().clearAll();
         String host = InetAddress.getLocalHost().getHostAddress();
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1); // 处理连接请求，默认线程数为1
+        EventLoopGroup workerGroup = new NioEventLoopGroup(); // 处理读写，默认线程数为CPU核心*2
         DefaultEventExecutorGroup serviceHandlerGroup = new DefaultEventExecutorGroup(
                 RuntimeUtil.cpus() * 2,
                 ThreadPoolFactoryUtil.createThreadFactory("service-handler-group", false)
@@ -72,13 +72,13 @@ public class NettyRpcServer {
                     // 当客户端第一次进行请求的时候才会进行初始化
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel ch) {
+                        protected void initChannel(SocketChannel socketChannel) {
                             // 30 秒之内没有收到客户端请求的话就关闭连接
-                            ChannelPipeline p = ch.pipeline();
-                            p.addLast(new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS));
-                            p.addLast(new RpcMessageEncoder());
-                            p.addLast(new RpcMessageDecoder());
-                            p.addLast(serviceHandlerGroup, new NettyRpcServerHandler());
+                            socketChannel.pipeline()
+                            .addLast(new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS))
+                            .addLast(new RpcMessageEncoder())
+                            .addLast(new RpcMessageDecoder())
+                            .addLast(serviceHandlerGroup, new NettyRpcServerHandler());
                         }
                     });
 

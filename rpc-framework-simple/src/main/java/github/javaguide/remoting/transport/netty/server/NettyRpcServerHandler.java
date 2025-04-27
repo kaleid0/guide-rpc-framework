@@ -42,9 +42,13 @@ public class NettyRpcServerHandler extends ChannelInboundHandlerAdapter {
             if (msg instanceof RpcMessage) {
                 log.info("server receive msg: [{}] ", msg);
                 byte messageType = ((RpcMessage) msg).getMessageType();
-                RpcMessage rpcMessage = new RpcMessage();
-                rpcMessage.setCodec(SerializationTypeEnum.HESSIAN.getCode());
-                rpcMessage.setCompress(CompressTypeEnum.GZIP.getCode());
+                // RpcMessage rpcMessage = new RpcMessage();
+                // rpcMessage.setCodec(SerializationTypeEnum.HESSIAN.getCode());
+                // rpcMessage.setCompress(CompressTypeEnum.GZIP.getCode());
+                RpcMessage rpcMessage = RpcMessage.builder()
+                    .codec(SerializationTypeEnum.HESSIAN.getCode())
+                    .compress(CompressTypeEnum.GZIP.getCode())
+                    .build();
                 if (messageType == RpcConstants.HEARTBEAT_REQUEST_TYPE) {
                     rpcMessage.setMessageType(RpcConstants.HEARTBEAT_RESPONSE_TYPE);
                     rpcMessage.setData(RpcConstants.PONG);

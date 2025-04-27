@@ -1,6 +1,5 @@
 package github.javaguide.remoting.transport.netty.codec;
 
-
 import github.javaguide.compress.Compress;
 import github.javaguide.enums.CompressTypeEnum;
 import github.javaguide.enums.SerializationTypeEnum;
